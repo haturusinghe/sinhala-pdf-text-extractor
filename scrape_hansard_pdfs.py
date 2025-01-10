@@ -4,10 +4,28 @@ import os
 from urllib.parse import urljoin
 import time
 import argparse
+import urllib3
+from requests.adapters import HTTPAdapter
+from urllib3.util.ssl_ import create_urllib3_context
+
+# Create a custom adapter with modified SSL configuration
+class CustomHttpAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        context = create_urllib3_context()
+        context.load_default_certs()
+        kwargs['ssl_context'] = context
+        return super(CustomHttpAdapter, self).init_poolmanager(*args, **kwargs)
+
+def get_session():
+    session = requests.Session()
+    adapter = CustomHttpAdapter()
+    session.mount('https://', adapter)
+    return session
 
 def download_pdf(url, folder):
     try:
-        response = requests.get(url)
+        session = get_session()
+        response = session.get(url, verify=False)
         if response.status_code == 200:
             # Extract filename from URL
             filename = url.split('/')[-1]
@@ -23,6 +41,10 @@ def download_pdf(url, folder):
     return False
 
 def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, page_load_wait=5):
+    # Disable SSL verification warnings
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    session = get_session()
+    
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
@@ -38,7 +60,7 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
         print(f"Processing page {pages_processed + 1} (start={page_num})")
         
         try:
-            response = requests.get(url, timeout=page_load_wait)
+            response = session.get(url, timeout=page_load_wait, verify=False)
             time.sleep(page_load_wait)  # Wait for page to load
             
             if response.status_code != 200:
