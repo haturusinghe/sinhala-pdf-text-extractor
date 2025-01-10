@@ -23,8 +23,8 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "--input_pdf", "data/raw/1736487038022510.pdf",
-                "--output", "data/extracted/ocr_1736487038022510.txt",
+                "--input_dir", "data/raw/",
+                "--output", "data/extracted/",
             ]
         },
         {
