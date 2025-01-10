@@ -32,16 +32,21 @@ def get_session():
     session.verify = False
     return session
 
-def download_pdf(url, folder, session):
-    """Download PDF using the provided session."""
+def download_pdf(url, base_folder, page_num, session):
+    """Download PDF using the provided session into a page-specific subfolder."""
     try:
+        # Create page-specific subfolder
+        folder = os.path.join(base_folder, f"page_{page_num}")
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
         response = session.get(url, timeout=30)
         if response.status_code == 200:
             filename = url.split('/')[-1]
             filepath = os.path.join(folder, filename)
             with open(filepath, 'wb') as f:
                 f.write(response.content)
-            print(f"Downloaded: {filename}")
+            print(f"Downloaded: {filename} to {folder}")
             return True
     except Exception as e:
         print(f"Error downloading {url}: {str(e)}")
@@ -92,7 +97,7 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
                 break
                 
             for pdf_url in pdf_links:
-                download_pdf(pdf_url, output_folder, session)
+                download_pdf(pdf_url, output_folder, pages_processed + 1, session)
                 time.sleep(1)
             
             page_num += 20
