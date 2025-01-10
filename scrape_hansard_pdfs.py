@@ -64,7 +64,7 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
     pages_processed = 0
     
     while True:
-        if max_pages and pages_processed >= max_pages:
+        if max_pages != -1 and pages_processed >= max_pages:
             print(f"Reached maximum number of pages ({max_pages})")
             break
             
