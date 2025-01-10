@@ -80,7 +80,7 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape Hansard PDFs from parliament.lk')
-    parser.add_argument('output_dir', help='Directory to save downloaded PDFs')
+    parser.add_argument('--output_dir', help='Directory to save downloaded PDFs')
     parser.add_argument('--skip-pages', type=int, default=0, help='Number of pages to skip')
     parser.add_argument('--max-pages', type=int, default=2, help='Maximum number of pages to process')
     parser.add_argument('--page-load-wait', type=int, default=10, help='Wait time in seconds for page loading')
