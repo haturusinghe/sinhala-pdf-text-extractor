@@ -4,7 +4,7 @@ import logging
 
 def main():
     parser = argparse.ArgumentParser(description='Extract text from PDF with Sinhala support')
-    parser.add_argument('input_pdf', help='Path to input PDF file')
+    parser.add_argument('--input_pdf', help='Path to input PDF file')
     parser.add_argument('--output', '-o', help='Path to output text file')
     parser.add_argument('--sinhala-only', '-s', action='store_true', 
                        help='Extract only Sinhala text')
