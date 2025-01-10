@@ -1,40 +1,33 @@
 import argparse
-from pathlib import Path
-from src.extractors.pdf_extractor import PDFExtractor
-from src.processors.unicode_handler import UnicodeHandler
+from src.extractors.pdf_extractor import PDFTextExtractor
+import logging
 
 def main():
-    parser = argparse.ArgumentParser(description='Extract text from PDF files with Sinhala support')
-    parser.add_argument('input_file', type=str, help='Path to the input PDF file')
-    parser.add_argument('--output', type=str, help='Path to the output text file', default=None)
-    
+    parser = argparse.ArgumentParser(description='Extract text from PDF with Sinhala support')
+    parser.add_argument('input_pdf', help='Path to input PDF file')
+    parser.add_argument('--output', '-o', help='Path to output text file')
+    parser.add_argument('--sinhala-only', '-s', action='store_true', 
+                       help='Extract only Sinhala text')
     args = parser.parse_args()
-    
+
     try:
-        # Initialize extractor
-        extractor = PDFExtractor(args.input_file)
+        extractor = PDFTextExtractor()
         
-        # Extract text
-        text = extractor.extract_text()
+        # Extract all text
+        full_text = extractor.extract_text_from_pdf(args.input_pdf, args.output)
         
-        # Process text
-        unicode_handler = UnicodeHandler()
-        processed_text = unicode_handler.clean_text(text)
-        
-        # Handle output
-        if args.output:
-            output_path = Path(args.output)
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(processed_text)
-            print(f"Text extracted and saved to {args.output}")
-        else:
-            print(processed_text)
-            
+        # If sinhala-only flag is set, extract and save only Sinhala text
+        if args.sinhala_only:
+            sinhala_text = extractor.extract_sinhala_text(full_text)
+            sinhala_output = args.output.replace('.txt', '_sinhala.txt') if args.output else 'sinhala_output.txt'
+            with open(sinhala_output, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(sinhala_text))
+            logging.info(f"Sinhala text saved to {sinhala_output}")
+
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logging.error(f"Error processing PDF: {str(e)}")
         return 1
-    
+
     return 0
 
 if __name__ == "__main__":
