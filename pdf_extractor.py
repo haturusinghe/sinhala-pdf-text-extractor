@@ -46,6 +46,8 @@ class PDFTextExtractor:
             pages = convert_from_path(pdf_path)
             full_text = ""
             
+            logger.info(f"Processing {pdf_path}")
+            
             for page_num, page_image in enumerate(pages, 1):
                 logger.info(f"Processing page {page_num}")
                 
@@ -73,18 +75,45 @@ class PDFTextExtractor:
             logger.error(f"Error during extraction: {str(e)}")
             raise
 
+    def process_directory(self, input_dir, output_dir):
+        """Process all PDF files in the input directory"""
+        output_dir = input_dir.split('/')[-1]
+        input_path = Path(input_dir)
+        output_path = Path(output_dir)
+        
+        if not input_path.is_dir():
+            raise ValueError(f"Input path {input_dir} is not a directory")
+        
+        # Create output directory if it doesn't exist
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        pdf_files = list(input_path.glob("*.pdf"))
+        if not pdf_files:
+            logger.warning(f"No PDF files found in {input_dir}")
+            return
+        
+        logger.info(f"Found {len(pdf_files)} PDF files to process")
+        
+        for pdf_file in pdf_files:
+            output_file = output_path / f"{pdf_file.stem}.txt"
+            try:
+                self.extract_text(pdf_file, output_file)
+            except Exception as e:
+                logger.error(f"Failed to process {pdf_file}: {str(e)}")
+                continue
+
 if __name__ == "__main__":
     import argparse
     
     check_dependencies()
     
-    parser = argparse.ArgumentParser(description='Extract text from PDF using OCR')
-    parser.add_argument('--input_pdf', help='Path to the input PDF file')
-    parser.add_argument('--output', help='Path to save the extracted text')
+    parser = argparse.ArgumentParser(description='Extract text from PDF files using OCR')
+    parser.add_argument('--input_dir', required=True, help='Directory containing PDF files')
+    parser.add_argument('--output_dir', required=True, help='Directory to save the extracted text files')
     parser.add_argument('--languages', nargs='+', default=['sin', 'eng', 'tam'],
                         help='Languages to use for OCR (default: sin eng tam)')
     
     args = parser.parse_args()
     
     extractor = PDFTextExtractor(languages=args.languages)
-    extractor.extract_text(args.input_pdf, args.output)
+    extractor.process_directory(args.input_dir, args.output_dir)
