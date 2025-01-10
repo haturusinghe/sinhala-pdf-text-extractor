@@ -5,33 +5,40 @@ from urllib.parse import urljoin
 import time
 import argparse
 import urllib3
+import ssl
 from requests.adapters import HTTPAdapter
-from urllib3.util.ssl_ import create_urllib3_context
+from urllib3.poolmanager import PoolManager
 
-# Create a custom adapter with modified SSL configuration
-class CustomHttpAdapter(HTTPAdapter):
-    def init_poolmanager(self, *args, **kwargs):
-        context = create_urllib3_context()
-        context.load_default_certs()
-        kwargs['ssl_context'] = context
-        return super(CustomHttpAdapter, self).init_poolmanager(*args, **kwargs)
+class TLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        """Create and initialize the urllib3 PoolManager with custom SSL context."""
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers('DEFAULT@SECLEVEL=1')
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        self.poolmanager = PoolManager(
+            num_pools=connections,
+            maxsize=maxsize,
+            block=block,
+            ssl_version=ssl.PROTOCOL_TLSv1_2,
+            ssl_context=ctx
+        )
 
 def get_session():
+    """Create a session with custom SSL adapter."""
     session = requests.Session()
-    adapter = CustomHttpAdapter()
+    adapter = TLSAdapter()
     session.mount('https://', adapter)
+    session.verify = False
     return session
 
-def download_pdf(url, folder):
+def download_pdf(url, folder, session):
+    """Download PDF using the provided session."""
     try:
-        session = get_session()
-        response = session.get(url, verify=False)
+        response = session.get(url, timeout=30)
         if response.status_code == 200:
-            # Extract filename from URL
             filename = url.split('/')[-1]
             filepath = os.path.join(folder, filename)
-            
-            # Save PDF
             with open(filepath, 'wb') as f:
                 f.write(response.content)
             print(f"Downloaded: {filename}")
@@ -41,14 +48,14 @@ def download_pdf(url, folder):
     return False
 
 def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, page_load_wait=5):
-    # Disable SSL verification warnings
+    """Scrape PDFs from parliament website."""
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     session = get_session()
     
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
-    page_num = skip_pages * 20  # Since each page shows 20 items
+    page_num = skip_pages * 20
     pages_processed = 0
     
     while True:
@@ -60,8 +67,8 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
         print(f"Processing page {pages_processed + 1} (start={page_num})")
         
         try:
-            response = session.get(url, timeout=page_load_wait, verify=False)
-            time.sleep(page_load_wait)  # Wait for page to load
+            response = session.get(url, timeout=page_load_wait)
+            time.sleep(page_load_wait)
             
             if response.status_code != 200:
                 print(f"Failed to fetch page: {response.status_code}")
@@ -85,7 +92,7 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
                 break
                 
             for pdf_url in pdf_links:
-                download_pdf(pdf_url, output_folder)
+                download_pdf(pdf_url, output_folder, session)
                 time.sleep(1)
             
             page_num += 20
@@ -102,7 +109,7 @@ def scrape_hansard_pdfs(base_url, output_folder, skip_pages=0, max_pages=None, p
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape Hansard PDFs from parliament.lk')
-    parser.add_argument('--output_dir', help='Directory to save downloaded PDFs')
+    parser.add_argument('--output_dir', default='hansard_pdfs', help='Directory to save downloaded PDFs')
     parser.add_argument('--skip-pages', type=int, default=0, help='Number of pages to skip')
     parser.add_argument('--max-pages', type=int, default=2, help='Maximum number of pages to process')
     parser.add_argument('--page-load-wait', type=int, default=10, help='Wait time in seconds for page loading')
