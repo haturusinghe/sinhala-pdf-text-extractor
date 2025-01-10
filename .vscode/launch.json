@@ -27,6 +27,19 @@
                 "--output", "data/extracted/ocr_1736487038022510.txt",
             ]
         },
+        {
+            "name": "Scrape Hansards",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--output_dir", "data/scraped_hansards/",
+                "--skip-pages", "0",
+                "--max-pages", "2",
+                "--page-load-wait", "10",
+            ]
+        },
         
     ]
 }
