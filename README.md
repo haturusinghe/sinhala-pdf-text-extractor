@@ -1,56 +1,55 @@
 # Sinhala PDF Text Extractor
 
-A tool for extracting text from PDF documents containing Sinhala text using OCR technology.
+A tool for extracting Sinhala text from PDF documents with a focus on Hansard parliamentary reports.
 
-## Prerequisites
+## Components
 
-1. Install system dependencies:
+### 1. PDF Text Extractor (`pdf_extractor.py`)
+
+A Python script that extracts text from PDF files containing Sinhala text. It uses various PDF parsing libraries to handle different PDF formats and encoding.
+
+Features:
+- Supports multiple PDF text extraction methods
+- Handles Sinhala Unicode text properly
+- Removes unwanted characters and formatting
+- Saves extracted text to output files
+
+Usage:
 ```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install -y poppler-utils
-sudo apt-get install tesseract-ocr
-sudo apt-get install tesseract-ocr-sin
-sudo apt-get install tesseract-ocr-tam
-
-# MacOS
-brew install poppler
-brew install tesseract
-brew install tesseract-lang
+python pdf_extractor.py <input_pdf_path> <output_text_path>
 ```
 
-2. Install Python dependencies:
+### 2. Hansard PDF Scraper (`scrape_hansards_pdfs.py`)
+
+A script specifically designed to download Hansard PDFs from the Parliament of Sri Lanka website.
+
+Features:
+- Scrapes PDF links from the parliament website
+- Downloads Hansard PDFs automatically
+- Organizes downloaded files by date
+- Handles network errors and retries
+
+Usage:
+```bash
+python scrape_hansards_pdfs.py
+```
+
+## Requirements
+
+- Python 3.x
+- pdfplumber
+- PyPDF2
+- requests
+- beautifulsoup4
+
+## Installation
+
+1. Clone this repository:
+```bash
+git clone https://github.com/haturusinghe/sinhala-pdf-text-extractor.git
+```
+
+2. Install required packages:
 ```bash
 pip install -r requirements.txt
 ```
-
-## Usage
-
-### Command Line Interface
-
-```bash
-python pdf_extractor.py input.pdf output.txt
-```
-
-Optional: Specify languages for OCR:
-```bash
-python pdf_extractor.py input.pdf output.txt --languages sin eng tam
-```
-
-### Python API
-
-```python
-from pdf_extractor import PDFTextExtractor
-
-extractor = PDFTextExtractor(languages=['sin', 'eng', 'tam'])
-extractor.extract_text('input.pdf', 'output.txt')
-```
-
-## Features
-
-- Multi-column layout support
-- Automatic page segmentation
-- Support for Sinhala, English, and Tamil text
-- Image preprocessing for improved OCR accuracy
-- Progress logging
-- Error handling
